@@ -1,0 +1,26 @@
+[package]
+name = "k"
+version = "0.1.0"
+readme = "README.md"
+
+[dependencies]
+nalgebra = "0.18.0"
+urdf-rs = "0.4.2"
+log = "0.4.6"
+failure = "0.1"
+indicatif = "0.11"
+pbr = "1.0.1"
+csv = "1.0.7"
+serde_json = "1.0.39"
+rayon = "1.0.3"
+
+[dev-dependencies]
+kiss3d = "0.20.0"
+rand = "0.3.0"
+docmatic = "0.1"
+
+#[profile.release]
+#debug = true
+
+#[profile.bench]
+#debug = true
