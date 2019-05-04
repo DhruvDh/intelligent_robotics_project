@@ -97,6 +97,38 @@ macro_rules! init {
         };
 }
 
+macro_rules! translation_of! {
+    ($thing: expr) => {
+        {
+            let v = $thing.translation.vector.to_vec();
+            (v[0], v[1], v[2])
+        }
+    };
+}
+
+macro_rules! rotation_of! {
+    ($thing: expr) => {
+        {
+            let v = $thing.rotation.coords.data.to_vec();
+            (v[0], v[1], v[2], v[3])
+        }
+    };
+}
+
+macro_rules! get_link_translation {
+    ($link: ident) => {
+           translation_of!($link.world_transform().expect(String::from(stringify!($link))))
+    }
+}
+
+macro_rules! get_link_rotation {
+    ($link: ident) => {
+        {
+           rotation_of!($link.world_transform().expect(String::from(stringify!($link))))
+        }
+    }
+}
+
 macro_rules! init_and_generate_data {
     (
         $fixed: ident, $l0: ident, $l1: ident, $l2: ident, $l3: ident,
@@ -105,6 +137,19 @@ macro_rules! init_and_generate_data {
         $range: expr, $step: expr, $possible_targets: ident, $num: expr
     ) => {
         let mut data = String::from("");
+        type translation = (f32, f32, f32);
+        type rotation = (f32, f32, f32);
+        type row = (
+            translation, translation, translation, translation,
+            rotation, rotation, rotation, rotation,
+            translation, translation, translation, translation,
+            rotation, rotation, rotation, rotation,
+            translation, translation, translation, translation,
+            rotation, rotation, rotation, rotation,
+            rotation, rotation
+            );
+        
+        let mut rows = Vec::<row>::new();
         let mut rows = Vec::<String>::new();
 
         init!(
@@ -130,17 +175,20 @@ macro_rules! init_and_generate_data {
                         $target.translation.vector[2] = *_z;
                         $arm.update_transforms();
 
-                        let _l0 = $l0.world_transform().expect("_l0").translation.vector.data.to_vec(); 
-                        let _l1 = $l1.world_transform().expect("_l1").translation.vector.data.to_vec();
-                        let _l2 = $l2.world_transform().expect("_l2").translation.vector.data.to_vec();
-                        let _l3 = $l3.world_transform().expect("_l3").translation.vector.data.to_vec();
-                        
-                        let _l0_rot = $l0.world_transform().expect("_l0_rot").rotation.coords.data.to_vec(); 
-                        let _l1_rot = $l1.world_transform().expect("_l1_rot").rotation.coords.data.to_vec();
-                        let _l2_rot = $l2.world_transform().expect("_l2_rot").rotation.coords.data.to_vec();
-                        let _l3_rot = $l3.world_transform().expect("_l3_rot").rotation.coords.data.to_vec();
+                        let _l0 = get_link_translation!($l0); 
+                        let _l1 = get_link_translation!($l1); 
+                        let _l2 = get_link_translation!($l2); 
+                        let _l3 = get_link_translation!($l3); 
 
-                        let a_joint_pos = $arm.joint_positions();
+                        let _l0_rot = get_link_rotation!($l0); 
+                        let _l1_rot = get_link_rotation!($l1); 
+                        let _l2_rot = get_link_rotation!($l2); 
+                        let _l3_rot = get_link_rotation!($l3); 
+
+                        let a_joint_pos = {
+                                let v = $arm.joint_positions();
+                                (v[0], v[1], v[2], v[3])
+                            };
 
                         $target.translation.vector[0] += (x as f32) * $step;
                         $target.translation.vector[1] += (y as f32) * $step;  
@@ -150,26 +198,31 @@ macro_rules! init_and_generate_data {
                             Ok(_) => {
                                 let transforms = $arm.update_transforms();
 
-                                let l0_final = $l0.world_transform().expect("l0_final").translation.vector.data.to_vec();
-                                let l1_final = $l1.world_transform().expect("l1_final").translation.vector.data.to_vec();
-                                let l2_final = $l2.world_transform().expect("l2_final").translation.vector.data.to_vec();
-                                let l3_final = $l3.world_transform().expect("l2_final").translation.vector.data.to_vec(); 
+                                let l0_final = get_link_translation!($l0);
+                                let l1_final = get_link_translation!($l1);
+                                let l2_final = get_link_translation!($l2);
+                                let l3_final = get_link_translation!($l3); 
                 
-                                let l0_final_rot = $l0.world_transform().expect("l0_rot_final").rotation.coords.data.to_vec(); 
-                                let l1_final_rot = $l1.world_transform().expect("l1_rot_final").rotation.coords.data.to_vec();
-                                let l2_final_rot = $l2.world_transform().expect("l2_rot_final").rotation.coords.data.to_vec();
-                                let l3_final_rot = $l3.world_transform().expect("l3_rot_final").rotation.coords.data.to_vec();
+                                let l0_final_rot = get_link_rotation!($l0); 
+                                let l1_final_rot = get_link_rotation!($l1);
+                                let l2_final_rot = get_link_rotation!($l2);
+                                let l3_final_rot = get_link_rotation!($l3);
 
-                                let l0_trans = transforms[0].translation.vector.data.to_vec();
-                                let l1_trans = transforms[1].translation.vector.data.to_vec();
-                                let l2_trans = transforms[2].translation.vector.data.to_vec();
-                                let l3_trans = transforms[3].translation.vector.data.to_vec(); 
+                                let l0_trans = translation_of!(transforms[0]);
+                                let l1_trans = translation_of!(transforms[1]);
+                                let l2_trans = translation_of!(transforms[2]);
+                                let l3_trans = translation_of!(transforms[3]); 
                 
-                                let l0_trans_rot = transforms[0].rotation.coords.data.to_vec(); 
-                                let l1_trans_rot = transforms[1].rotation.coords.data.to_vec();
-                                let l2_trans_rot = transforms[2].rotation.coords.data.to_vec();
-                                let l3_trans_rot = transforms[3].rotation.coords.data.to_vec();
+                                let l0_trans_rot = rotation_of!(transforms[0]); 
+                                let l1_trans_rot = rotation_of!(transforms[1]);
+                                let l2_trans_rot = rotation_of!(transforms[2]);
+                                let l3_trans_rot = rotation_of!(transforms[3]);
 
+                                let b_joint_pos = {
+                                        let v = $arm.joint_positions();
+                                        (v[0], v[1], v[2], v[3])
+                                    };
+                                    
                                 rows.push(format!("{{
                                         \"l0\": {:?},\n
                                         \"l1\": {:?},\n
