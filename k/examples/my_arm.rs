@@ -97,16 +97,16 @@ macro_rules! init {
         };
 }
 
-macro_rules! translation_of! {
+macro_rules! translation_of {
     ($thing: expr) => {
         {
-            let v = $thing.translation.vector.to_vec();
+            let v = $thing.translation.vector.data.to_vec();
             (v[0], v[1], v[2])
         }
     };
 }
 
-macro_rules! rotation_of! {
+macro_rules! rotation_of {
     ($thing: expr) => {
         {
             let v = $thing.rotation.coords.data.to_vec();
@@ -117,14 +117,14 @@ macro_rules! rotation_of! {
 
 macro_rules! get_link_translation {
     ($link: ident) => {
-           translation_of!($link.world_transform().expect(String::from(stringify!($link))))
+           translation_of!($link.world_transform().expect(stringify!($link)))
     }
 }
 
 macro_rules! get_link_rotation {
     ($link: ident) => {
         {
-           rotation_of!($link.world_transform().expect(String::from(stringify!($link))))
+           rotation_of!($link.world_transform().expect(stringify!($link)))
         }
     }
 }
@@ -138,7 +138,7 @@ macro_rules! init_and_generate_data {
     ) => {
         let mut data = String::from("");
         type translation = (f32, f32, f32);
-        type rotation = (f32, f32, f32);
+        type rotation = (f32, f32, f32, f32);
         type row = (
             translation, translation, translation, translation,
             rotation, rotation, rotation, rotation,
@@ -150,7 +150,7 @@ macro_rules! init_and_generate_data {
             );
         
         let mut rows = Vec::<row>::new();
-        let mut rows = Vec::<String>::new();
+        // let mut rows = Vec::<String>::new();
 
         init!(
             $fixed, $l0, $l1, $l2, $l3,
@@ -222,8 +222,26 @@ macro_rules! init_and_generate_data {
                                         let v = $arm.joint_positions();
                                         (v[0], v[1], v[2], v[3])
                                     };
-                                    
-                                rows.push(format!("{{
+
+                                rows.push((
+                                        _l0, _l1, _l2, _l3,
+                                        _l0_rot, _l1_rot, _l2_rot, _l3_rot,
+                                        l0_final, l1_final, l2_final, l3_final,
+                                        l0_final_rot, l1_final_rot, l2_final_rot, l3_final_rot,
+                                        l0_trans, l1_trans, l2_trans, l3_trans,
+                                        l0_trans_rot, l1_trans_rot, l2_trans_rot, l3_trans_rot,
+                                        a_joint_pos, b_joint_pos
+                                ));
+                            },
+                            Err(_) => {}
+                        }
+                    });
+                });
+            });
+        }
+
+        rows.iter().for_each(|row| {
+            let row_string = format!("{{
                                         \"l0\": {:?},\n
                                         \"l1\": {:?},\n
                                         \"l2\": {:?},\n
@@ -251,28 +269,20 @@ macro_rules! init_and_generate_data {
                                         \"a_joint_pos\": {:?},\n
                                         \"b_joint_pos\": {:?}\n
                                         }},\n
-                                    ", _l0, _l1, _l2, _l3,
-                                        _l0_rot, _l1_rot, _l2_rot, _l3_rot,
-                                        l0_final, l1_final, l2_final, l3_final,
-                                        l0_final_rot, l1_final_rot, l2_final_rot, l3_final_rot,
-                                        l0_trans, l1_trans, l2_trans, l3_trans,
-                                        l0_trans_rot, l1_trans_rot, l2_trans_rot, l3_trans_rot, a_joint_pos,
-                                        $arm.joint_positions()
-                                ));
-                            },
-                            Err(_) => {}
-                        }
-                    });
-                });
-            });
-        }
-
-        rows.iter().for_each(|row| {
-            data = format!("{}{}", data, row);
+                                    ", row.0, row.1, row.2, row.3,
+                                    row.4, row.5, row.6, row.7,
+                                    row.8, row.9, row.10, row.11,
+                                    row.12, row.13, row.14, row.15,
+                                    row.16, row.17, row.18, row.19,
+                                    row.20, row.21, row.22, row.23,
+                                    row.24, row.25);
+            data = format!("{}{}", data, row_string);
         });
 
         let mut f = File::create(format!("data{}.json", $num)).expect("Unable to create file");
         f.write_all(data.as_bytes()).expect("Unable to write data");
+
+        println!("Thread {}'s work is done. See data{}.json", $num);
     }
 }
 
