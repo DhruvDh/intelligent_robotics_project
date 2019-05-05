@@ -282,7 +282,7 @@ macro_rules! init_and_generate_data {
         let mut f = File::create(format!("data{}.json", $num)).expect("Unable to create file");
         f.write_all(data.as_bytes()).expect("Unable to write data");
 
-        println!("Thread {}'s work is done. See data{}.json", $num);
+        println!("Thread {}'s work is done. See data{}.json", $num, $num);
     }
 }
 
